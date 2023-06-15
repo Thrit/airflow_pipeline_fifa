@@ -1,4 +1,3 @@
-import os
 import re
 import pandas as pd
 
@@ -6,8 +5,6 @@ from datetime import timedelta
 from airflow import DAG
 from airflow.utils.dates import days_ago
 from airflow.operators.python import PythonOperator
-
-dag_path = os.getcwd()
 
 
 def transform_data():
@@ -224,10 +221,20 @@ def transform_data():
     for col in categorical_columns:
         df_fifa[col] = df_fifa[col].astype('category')
 
-    print(df_fifa.head())
+    df_fifa.to_csv(f'/opt/airflow/processed_data/processed_data.csv', index=False)
 
-def load_data():
-    print('load data passou')
+    print(df_fifa.columns)
+
+
+def load_data() -> None:
+
+    from sqlalchemy import create_engine
+
+    df = pd.read_csv(f'/opt/airflow/processed_data/processed_data.csv')
+
+    engine_url = f'postgresql+psycopg2://airflow:airflow@postgres/airflow'
+    engine = create_engine(engine_url)
+    df.to_sql('fifa_database', engine, if_exists='replace')
 
 
 default_args = {
